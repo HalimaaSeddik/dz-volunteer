@@ -1,0 +1,78 @@
+version: '3.8'
+
+services:
+  # Base de données PostgreSQL
+  db:
+    image: postgres:15-alpine
+    container_name: dzvolunteer_db
+    environment:
+      POSTGRES_DB: dzvolunteer
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: 20772077
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./verify_database.sql:/docker-entrypoint-initdb.d/verify_database.sql
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Backend Django
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: dzvolunteer_backend
+    command: sh -c "python manage.py migrate && python manage.py init_data && python manage.py runserver 0.0.0.0:8000"
+    volumes:
+      - ./backend:/app
+      - static_volume:/app/staticfiles
+      - media_volume:/app/media
+    ports:
+      - "8000:8000"
+    environment:
+      - SECRET_KEY=django-insecure-dev-key-change-in-production
+      - DEBUG=True
+      - DB_NAME=dzvolunteer
+      - DB_USER=postgres
+      - DB_PASSWORD=20772077
+      - DB_HOST=db
+      - DB_PORT=5432
+      - ALLOWED_HOSTS=localhost,127.0.0.1,backend
+      - CORS_ALLOWED_ORIGINS=http://localhost:3000,http://localhost:5173
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Frontend React (optionnel - à décommenter quand prêt)
+  # frontend:
+  #   build:
+  #     context: ./frontend/dz-volunter
+  #     dockerfile: Dockerfile
+  #   container_name: dzvolunteer_frontend
+  #   ports:
+  #     - "3000:3000"
+  #   environment:
+  #     - REACT_APP_API_URL=http://localhost:8000/api
+  #   depends_on:
+  #     - backend
+  #   volumes:
+  #     - ./frontend/dz-volunter:/app
+  #     - /app/node_modules
+
+volumes:
+  postgres_data:
+  static_volume:
+  media_volume:
+
+networks:
+  default:
+    name: dzvolunteer_network

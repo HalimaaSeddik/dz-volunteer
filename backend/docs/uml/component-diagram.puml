@@ -1,0 +1,171 @@
+@startuml component-diagram
+
+' Configuration
+!define RECTANGLE
+skinparam componentStyle rectangle
+
+' ========== COMPOSANTS FRONTEND ==========
+package "Frontend - React" {
+  component [Application React\nSPA] as ReactApp
+  component [Redux Store\n(État global)] as Redux
+  component [React Router\n(Navigation)] as Router
+  component [Axios HTTP Client] as Axios
+  component [i18n\n(FR/AR)] as i18n
+}
+
+' ========== COMPOSANTS BACKEND ==========
+package "Backend - Django REST Framework" {
+  
+  ' API Layer
+  package "API Layer" {
+    component [JWT Authentication] as JWT
+    component [REST API\nEndpoints] as API
+    component [Permissions\n& Autorisation] as Permissions
+    component [Serializers\n(Validation)] as Serializers
+  }
+  
+  ' Business Logic Layer
+  package "Business Logic" {
+    component [Accounts\nApp] as AccountsApp
+    component [Missions\nApp] as MissionsApp
+    component [Skills\nApp] as SkillsApp
+    component [ODD\nApp] as ODDApp
+  }
+  
+  ' Data Layer
+  package "Data Layer" {
+    component [Django ORM] as ORM
+    component [Models] as Models
+    component [Migrations] as Migrations
+  }
+}
+
+' ========== BASE DE DONNÉES ==========
+database "PostgreSQL 15" {
+  [Tables\nRelationnelles] as Tables
+  [Index\nPerformance] as Indexes
+  [Contraintes\nIntégrité] as Constraints
+}
+
+' ========== SERVICES EXTERNES ==========
+cloud "Services Externes" {
+  [Email SMTP\n(Notifications)] as SMTP
+  [Stockage Fichiers\n(Media)] as Storage
+}
+
+' ========== INFRASTRUCTURE ==========
+node "Infrastructure" {
+  [Docker\nContainers] as Docker
+  [CI/CD\nGitHub Actions] as CICD
+  [Plateforme Déploiement\n(Render/Railway)] as Deploy
+}
+
+' ========== RELATIONS FRONTEND ==========
+ReactApp --> Redux : gère état
+ReactApp --> Router : navigation
+ReactApp --> i18n : traduction FR/AR
+ReactApp --> Axios : requêtes HTTP
+
+' ========== RELATIONS FRONTEND ↔ BACKEND ==========
+Axios --> JWT : Authorization: Bearer <token>
+Axios --> API : HTTP REST (JSON)
+
+' ========== RELATIONS API LAYER ==========
+API --> JWT : authentification
+API --> Permissions : vérification autorisation
+API --> Serializers : validation données
+
+' ========== RELATIONS BUSINESS LOGIC ==========
+Serializers --> AccountsApp
+Serializers --> MissionsApp
+Serializers --> SkillsApp
+Serializers --> ODDApp
+
+' ========== RELATIONS DATA LAYER ==========
+AccountsApp --> Models
+MissionsApp --> Models
+SkillsApp --> Models
+ODDApp --> Models
+
+Models --> ORM
+ORM --> Migrations
+Migrations --> Tables
+
+' ========== RELATIONS BASE DE DONNÉES ==========
+ORM --> Tables : SQL Queries
+Tables --> Indexes : performance
+Tables --> Constraints : intégrité
+
+' ========== RELATIONS SERVICES EXTERNES ==========
+AccountsApp --> SMTP : envoi emails
+Models --> Storage : upload fichiers
+
+' ========== RELATIONS INFRASTRUCTURE ==========
+API --> Docker : containerisation
+CICD --> Docker : build images
+Docker --> Deploy : déploiement
+
+' ========== NOTES ==========
+note right of JWT
+  **JWT Tokens:**
+  - Access Token (15min)
+  - Refresh Token (7 jours)
+  
+  **Endpoints:**
+  POST /api/auth/login/
+  POST /api/auth/refresh/
+end note
+
+note right of API
+  **API RESTful:**
+  - GET: Lire
+  - POST: Créer
+  - PUT/PATCH: Modifier
+  - DELETE: Supprimer
+  
+  **Codes HTTP:**
+  200 OK, 201 Created
+  400 Bad Request, 401 Unauthorized
+  403 Forbidden, 404 Not Found
+  500 Internal Server Error
+end note
+
+note right of Permissions
+  **Permissions personnalisées:**
+  - IsVolunteer
+  - IsOrganization
+  - IsAdminUser
+  
+  **Règles:**
+  - Bénévole: postuler missions
+  - Organisation: gérer missions
+  - Admin: valider compétences
+end note
+
+note right of Models
+  **11 Modèles principaux:**
+  User, Volunteer, Organization
+  Mission, Application, Participation
+  Skill, VolunteerSkill
+  ODD, Review, Report
+end note
+
+note bottom of Tables
+  **PostgreSQL Features:**
+  - Types avancés (JSONB)
+  - Index B-tree
+  - Contraintes FK
+  - Triggers (optionnel)
+end note
+
+note bottom of Docker
+  **Containers:**
+  - backend (Django)
+  - db (PostgreSQL)
+  - frontend (React) [optionnel]
+  
+  **docker-compose.yml:**
+  Orchestration environnement
+end note
+
+@enduml

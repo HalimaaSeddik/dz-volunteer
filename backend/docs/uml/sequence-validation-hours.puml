@@ -1,0 +1,149 @@
+@startuml sequence-validation-hours
+
+' Configuration
+title Diagramme de Séquence 2: Validation des Heures\net Mise à Jour Automatique du Badge
+
+actor "Organisation" as Org
+participant "Frontend React" as Frontend
+participant "API Gateway\n(JWT Auth)" as Gateway
+participant "OrganizationView\n(Django)" as OrgView
+participant "ValidationService\n(Logique Métier)" as Service
+participant "Participation\n(Model)" as Participation
+participant "Volunteer\n(Model)" as Volunteer
+participant "BadgeCalculator\n(Service)" as BadgeCalc
+database "PostgreSQL" as DB
+
+== Contexte Initial ==
+note over Org, DB
+  **Situation:**
+  - Mission terminée (end_date passée)
+  - Bénévole: Alice (total_hours=45, badge=BRONZE)
+  - Participation: 10h à valider
+  - Objectif: Valider heures → Passer SILVER (45+10=55h)
+end note
+
+== Authentification ==
+Org -> Frontend : Clique sur "Valider 10 heures"
+Frontend -> Gateway : POST /api/missions/organization/validate-hours/\n{"participation_id": 123, "hours": 10}\nAuthorization: Bearer <token>
+Gateway -> Gateway : Vérifier JWT Token (Organisation)
+alt Token invalide ou pas Organisation
+  Gateway --> Frontend : 403 Forbidden
+  Frontend --> Org : "Accès refusé"
+else Token valide + Organisation
+  Gateway -> OrgView : Request avec user (Organisation)
+end
+
+== Vérification Propriété ==
+OrgView -> Service : validate_hours(participation_id, hours, organization)
+Service -> DB : SELECT * FROM participations\nJOIN missions ON participation.mission_id = mission.id\nWHERE participation.id=123
+DB --> Service : Participation(id=123, mission.organization=Org,\n volunteer=Alice, status='PENDING')
+
+alt Organisation ne possède pas la mission
+  Service --> OrgView : PermissionError("Pas votre mission")
+  OrgView --> Frontend : 403 Forbidden
+  Frontend --> Org : "Cette participation ne vous appartient pas"
+else Organisation propriétaire
+  Service -> Service : ✓ Organisation autorisée
+end
+
+== Vérification Date Mission ==
+Service -> DB : SELECT end_date FROM missions WHERE id=?
+DB --> Service : Mission(end_date='2025-12-20')
+Service -> Service : Comparer avec date du jour (2025-12-21)
+
+alt Mission pas encore terminée
+  Service --> OrgView : ValidationError("Mission pas terminée")
+  OrgView --> Frontend : 400 Bad Request
+  Frontend --> Org : "Impossible de valider avant la fin"
+else Mission terminée
+  Service -> Service : ✓ Date OK
+end
+
+== Transaction Base de Données ==
+note over Service, DB
+  **Transaction ACID:**
+  BEGIN TRANSACTION;
+  Toutes les opérations doivent réussir
+  ou tout est annulé (rollback)
+end note
+
+Service -> DB : BEGIN TRANSACTION
+
+== 1. Mise à jour Participation ==
+Service -> Participation : validate(hours=10)
+Participation -> DB : UPDATE participations\nSET hours_completed=10,\n status='VALIDATED',\n validated_at=NOW()\nWHERE id=123
+DB --> Participation : ✓ 1 row updated
+
+== 2. Récupération Bénévole ==
+Service -> DB : SELECT * FROM volunteers\nWHERE id=(SELECT volunteer_id FROM participations WHERE id=123)\nFOR UPDATE  -- Lock row
+DB --> Service : Volunteer(id=5, total_hours=45,\n completed_missions=7, badge='BRONZE')
+
+== 3. Calcul Nouvelles Statistiques ==
+Service -> Service : Calculer nouvelles valeurs
+note right
+  new_total_hours = 45 + 10 = 55
+  new_completed_missions = 7 + 1 = 8
+end note
+
+== 4. Calcul Automatique du Badge ==
+Service -> BadgeCalc : calculate_badge_level(total_hours=55)
+BadgeCalc -> BadgeCalc : Appliquer règles métier
+note right of BadgeCalc
+  **Règles Badge:**
+  if total_hours < 50:
+    return 'BRONZE'
+  elif total_hours < 200:
+    return 'SILVER'  ← 55h
+  else:
+    return 'GOLD'
+end note
+BadgeCalc --> Service : 'SILVER'
+
+== 5. Mise à jour Bénévole ==
+Service -> Volunteer : update_statistics(total_hours=55,\n completed_missions=8,\n badge_level='SILVER')
+Volunteer -> DB : UPDATE volunteers\nSET total_hours=55,\n completed_missions=8,\n badge_level='SILVER'\nWHERE id=5
+DB --> Volunteer : ✓ 1 row updated
+
+== 6. Commit Transaction ==
+Service -> DB : COMMIT TRANSACTION
+DB --> Service : ✓ Transaction réussie
+
+note over Service, DB
+  **Toutes les mises à jour atomiques:**
+  ✓ Participation validée (10h)
+  ✓ Bénévole: total_hours = 55h
+  ✓ Bénévole: completed_missions = 8
+  ✓ Bénévole: badge_level = SILVER
+end note
+
+== Notification (Optionnel) ==
+Service -> Service : send_notification_to_volunteer()
+note right
+  Envoyer email/notification:
+  "Félicitations! Vos 10 heures ont été validées.
+  Vous êtes passé au niveau SILVER! 🥈"
+end note
+
+== Réponse Succès ==
+Service --> OrgView : ValidationResult(success=True,\n new_badge='SILVER')
+OrgView --> Frontend : 200 OK\n{"message": "Heures validées",\n "volunteer": {\n   "total_hours": 55,\n   "badge": "SILVER",\n   "completed_missions": 8\n }}
+
+Frontend --> Org : ✓ "Heures validées avec succès!\nLe bénévole est passé SILVER 🥈"
+
+== Mise à jour UI ==
+Frontend -> Frontend : Actualiser statistiques mission
+Frontend -> Frontend : Mettre à jour statut participation
+
+note over Org, DB
+  **Règles Métier Appliquées:**
+  ✓ Vérification propriété mission
+  ✓ Vérification date fin mission
+  ✓ Transaction atomique (ACID)
+  ✓ Calcul automatique badge
+  ✓ Mise à jour statistiques
+  
+  **Résultat:**
+  Alice: 45h (BRONZE) → 55h (SILVER)
+end note
+
+@enduml

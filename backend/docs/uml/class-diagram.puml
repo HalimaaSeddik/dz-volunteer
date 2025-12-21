@@ -1,0 +1,275 @@
+@startuml class-diagram
+
+' Configuration
+skinparam classAttributeIconSize 0
+left to right direction
+
+' ========== MODÈLE USER & AUTH ==========
+class User {
+  + id: UUID
+  + email: EmailField [unique]
+  + password: CharField [hashed]
+  + first_name: CharField
+  + last_name: CharField
+  + user_type: CharField [VOLUNTEER|ORGANIZATION|ADMIN]
+  + is_active: BooleanField
+  + is_staff: BooleanField
+  + is_superuser: BooleanField
+  + date_joined: DateTimeField
+  --
+  + create_user()
+  + create_superuser()
+  + check_password()
+  + set_password()
+}
+
+' ========== MODÈLE VOLUNTEER ==========
+class Volunteer {
+  + id: AutoField
+  + user: OneToOneField(User)
+  + date_of_birth: DateField
+  + phone: CharField
+  + wilaya: CharField [58 wilayas]
+  + address: TextField [optional]
+  + bio: TextField [optional]
+  + total_hours: IntegerField [default=0]
+  + completed_missions: IntegerField [default=0]
+  + average_rating: DecimalField [default=0.0]
+  --
+  + badge_level: Property
+  + get_validated_skills()
+  + update_statistics()
+}
+
+' ========== MODÈLE ORGANIZATION ==========
+class Organization {
+  + id: AutoField
+  + user: OneToOneField(User)
+  + organization_name: CharField
+  + organization_type: CharField [NGO|ASSOCIATION|etc]
+  + phone: CharField
+  + wilaya: CharField
+  + address: TextField
+  + description: TextField
+  + website: URLField [optional]
+  + is_verified: BooleanField [default=False]
+  + representative_first_name: CharField
+  + representative_last_name: CharField
+  + representative_position: CharField
+  + total_missions: IntegerField [default=0]
+  + average_rating: DecimalField [default=0.0]
+  --
+  + get_active_missions()
+  + get_statistics()
+}
+
+' ========== MODÈLE SKILL ==========
+class Skill {
+  + id: AutoField
+  + name: CharField [unique]
+  + description: TextField
+  + category: CharField [optional]
+  + requires_verification: BooleanField [default=False]
+  --
+  + get_volunteers_count()
+}
+
+' ========== MODÈLE VOLUNTEER_SKILL ==========
+class VolunteerSkill {
+  + id: AutoField
+  + volunteer: ForeignKey(Volunteer)
+  + skill: ForeignKey(Skill)
+  + status: CharField [PENDING|VALIDATED|REJECTED]
+  + document: FileField [optional]
+  + validated_by: ForeignKey(User) [optional]
+  + validated_at: DateTimeField [optional]
+  + rejection_reason: TextField [optional]
+  + created_at: DateTimeField
+  --
+  Meta: unique_together = (volunteer, skill)
+}
+
+' ========== MODÈLE ODD ==========
+class ODD {
+  + id: AutoField
+  + number: IntegerField [1-17, unique]
+  + title_fr: CharField
+  + title_ar: CharField
+  + description_fr: TextField
+  + description_ar: TextField [optional]
+  + color: CharField [hex color]
+  --
+  + get_missions_count()
+}
+
+' ========== MODÈLE MISSION ==========
+class Mission {
+  + id: AutoField
+  + organization: ForeignKey(Organization)
+  + title: CharField
+  + description: TextField
+  + cause: CharField [ENVIRONMENT|EDUCATION|etc]
+  + type: CharField [ONE_TIME|RECURRING]
+  + status: CharField [DRAFT|PUBLISHED|ONGOING|COMPLETED|CANCELLED|ARCHIVED]
+  + wilaya: CharField
+  + address: TextField
+  + start_date: DateField
+  + end_date: DateField
+  + max_volunteers: IntegerField
+  + current_volunteers: IntegerField [default=0]
+  + odd: ForeignKey(ODD)
+  + image: ImageField [optional]
+  + created_at: DateTimeField
+  + updated_at: DateTimeField
+  --
+  + is_full: Property
+  + get_applications_count()
+}
+
+' ========== MODÈLE MISSION_SKILL_REQUIREMENT ==========
+class MissionSkillRequirement {
+  + id: AutoField
+  + mission: ForeignKey(Mission)
+  + skill: ForeignKey(Skill)
+  + is_required: BooleanField
+  --
+  Meta: unique_together = (mission, skill)
+}
+
+' ========== MODÈLE APPLICATION ==========
+class Application {
+  + id: AutoField
+  + mission: ForeignKey(Mission)
+  + volunteer: ForeignKey(Volunteer)
+  + status: CharField [PENDING|ACCEPTED|REJECTED|CANCELLED]
+  + motivation: TextField
+  + applied_at: DateTimeField
+  + reviewed_at: DateTimeField [optional]
+  + rejection_reason: TextField [optional]
+  --
+  Meta: unique_together = (mission, volunteer)
+  + can_accept()
+}
+
+' ========== MODÈLE PARTICIPATION ==========
+class Participation {
+  + id: AutoField
+  + mission: ForeignKey(Mission)
+  + volunteer: ForeignKey(Volunteer)
+  + hours_completed: IntegerField [default=0]
+  + status: CharField [PENDING_VALIDATION|VALIDATED|REJECTED]
+  + validated_at: DateTimeField [optional]
+  + created_at: DateTimeField
+  --
+  + validate_hours()
+}
+
+' ========== MODÈLE REVIEW ==========
+class Review {
+  + id: AutoField
+  + reviewer: ForeignKey(User)
+  + reviewed: ForeignKey(User)
+  + participation: ForeignKey(Participation)
+  + rating: IntegerField [1-5]
+  + comment: TextField [optional]
+  + created_at: DateTimeField
+  --
+  Meta: unique_together = (reviewer, reviewed, participation)
+}
+
+' ========== MODÈLE REPORT ==========
+class Report {
+  + id: AutoField
+  + reporter: ForeignKey(User)
+  + reported: ForeignKey(User)
+  + reason: CharField
+  + description: TextField
+  + status: CharField [PENDING|RESOLVED|REJECTED]
+  + created_at: DateTimeField
+  + resolved_at: DateTimeField [optional]
+  + resolved_by: ForeignKey(User) [optional]
+}
+
+' ========== RELATIONS ==========
+User "1" -- "0..1" Volunteer : user >
+User "1" -- "0..1" Organization : user >
+
+Volunteer "1" -- "*" VolunteerSkill : volunteer <
+Skill "1" -- "*" VolunteerSkill : skill <
+
+Organization "1" -- "*" Mission : organization <
+Mission "*" -- "1" ODD : odd >
+
+Mission "1" -- "*" MissionSkillRequirement : mission <
+Skill "1" -- "*" MissionSkillRequirement : skill <
+
+Mission "1" -- "*" Application : mission <
+Volunteer "1" -- "*" Application : volunteer <
+
+Mission "1" -- "*" Participation : mission <
+Volunteer "1" -- "*" Participation : volunteer <
+
+Participation "1" -- "0..2" Review : participation <
+User "1" -- "*" Review : reviewer <
+User "1" -- "*" Review : reviewed <
+
+User "1" -- "*" Report : reporter <
+User "1" -- "*" Report : reported <
+User "1" -- "*" Report : resolved_by <
+
+' ========== NOTES ==========
+note right of Volunteer
+  **Badge automatique:**
+  - 0-49h: BRONZE
+  - 50-199h: SILVER
+  - 200h+: GOLD
+  
+  **Règle métier:**
+  Mise à jour automatique
+  après validation heures
+end note
+
+note right of VolunteerSkill
+  **Validation admin:**
+  Si skill.requires_verification = True
+  → Statut PENDING
+  → Admin valide → VALIDATED
+  
+  **Compétences nécessitant vérification:**
+  - Premiers Secours
+  - Langue des signes
+  - Psychologie
+  - Soins infirmiers
+  - Enseignement
+  - Conduite véhicules lourds
+  - Sécurité incendie
+end note
+
+note right of Application
+  **Contrainte unicité:**
+  Un bénévole ne peut postuler
+  qu'une fois par mission
+  
+  **Vérification automatique:**
+  Validation des compétences
+  requises avant candidature
+end note
+
+note right of Participation
+  **Validation heures:**
+  - Seulement après end_date
+  - Par organisation uniquement
+  - Met à jour:
+    * volunteer.total_hours
+    * volunteer.completed_missions
+    * volunteer.badge_level (auto)
+end note
+
+note top of ODD
+  **17 Objectifs ONU:**
+  Sustainable Development Goals
+  Titres FR + AR
+  Couleurs officielles
+end note
+
+@enduml

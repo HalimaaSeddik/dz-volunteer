@@ -1,0 +1,101 @@
+@startuml sequence-application
+
+' Configuration
+title Diagramme de Séquence 1: Candidature à une Mission\navec Vérification des Compétences
+
+actor "Bénévole" as Benevole
+participant "Frontend React" as Frontend
+participant "API Gateway\n(JWT Auth)" as Gateway
+participant "MissionView\n(Django)" as MissionView
+participant "ApplicationService\n(Logique Métier)" as Service
+participant "VolunteerSkill\n(Model)" as VolunteerSkill
+participant "MissionSkillRequirement\n(Model)" as Requirement
+participant "Application\n(Model)" as Application
+database "PostgreSQL" as DB
+
+== Authentification ==
+Benevole -> Frontend : Clique sur "Postuler"
+Frontend -> Gateway : POST /api/missions/volunteer/apply/\nAuthorization: Bearer <token>
+Gateway -> Gateway : Vérifier JWT Token
+alt Token invalide
+  Gateway --> Frontend : 401 Unauthorized
+  Frontend --> Benevole : "Session expirée"
+else Token valide
+  Gateway -> MissionView : Request avec user authentifié
+end
+
+== Vérification Capacité Mission ==
+MissionView -> Service : validate_application(mission, volunteer)
+Service -> DB : SELECT max_volunteers, current_volunteers\nFROM missions WHERE id=?
+DB --> Service : Mission(max=10, current=7)
+
+alt Mission pleine
+  Service --> MissionView : ValidationError("Mission complète")
+  MissionView --> Frontend : 400 Bad Request\n{"error": "Mission complète"}
+  Frontend --> Benevole : "Cette mission est complète"
+else Places disponibles
+  Service -> Service : ✓ Capacité OK (7/10)
+end
+
+== Vérification Candidature Unique ==
+Service -> DB : SELECT COUNT(*) FROM applications\nWHERE mission=? AND volunteer=?
+DB --> Service : count = 0
+
+alt Candidature existante
+  Service --> MissionView : ValidationError("Déjà postulé")
+  MissionView --> Frontend : 400 Bad Request\n{"error": "Déjà postulé"}
+  Frontend --> Benevole : "Vous avez déjà postulé"
+else Pas de candidature
+  Service -> Service : ✓ Candidature unique OK
+end
+
+== Vérification Compétences Requises ==
+Service -> Requirement : get_required_skills(mission)
+Requirement -> DB : SELECT skill_id FROM mission_skill_requirements\nWHERE mission=? AND is_required=TRUE
+DB --> Requirement : [Skill(id=5, "Premiers Secours")]
+
+Service -> VolunteerSkill : check_volunteer_skills(volunteer, required_skills)
+VolunteerSkill -> DB : SELECT skill_id, status\nFROM volunteer_skills\nWHERE volunteer=? AND skill_id IN (?) AND status='VALIDATED'
+DB --> VolunteerSkill : [VolunteerSkill(skill=5, status='VALIDATED')]
+
+alt Compétences manquantes
+  VolunteerSkill --> Service : Missing skills: [5]
+  Service --> MissionView : ValidationError("Compétences requises manquantes")
+  MissionView --> Frontend : 400 Bad Request\n{"error": "Compétences manquantes",\n "missing": ["Premiers Secours"]}
+  Frontend --> Benevole : "Vous devez avoir la compétence\nPremiers Secours validée"
+else Toutes compétences validées
+  VolunteerSkill --> Service : ✓ Toutes compétences OK
+end
+
+== Création de la Candidature ==
+Service -> Application : create(mission, volunteer, motivation)
+Application -> DB : INSERT INTO applications\n(mission_id, volunteer_id, status, motivation, applied_at)\nVALUES (?, ?, 'PENDING', ?, NOW())
+DB --> Application : Application(id=42, status='PENDING')
+
+Application --> Service : Application créée
+Service --> MissionView : Application(id=42)
+
+== Notification (Optionnel) ==
+MissionView -> MissionView : send_notification_to_organization()
+note right
+  Envoyer email à l'organisation
+  pour notifier de la nouvelle candidature
+end note
+
+== Réponse Succès ==
+MissionView --> Frontend : 201 Created\n{"id": 42, "status": "PENDING",\n "applied_at": "2025-12-21T10:30:00Z"}
+Frontend --> Benevole : ✓ "Candidature envoyée avec succès!\nEn attente de validation."
+
+== Mise à jour UI ==
+Frontend -> Frontend : Actualiser liste candidatures
+Frontend -> Frontend : Afficher badge "En attente"
+
+note over Benevole, DB
+  **Règles Métier Validées:**
+  ✓ Mission a des places disponibles
+  ✓ Bénévole n'a pas déjà postulé
+  ✓ Toutes compétences requises sont validées
+  → Candidature créée avec statut PENDING
+end note
+
+@enduml

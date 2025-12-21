@@ -1,0 +1,40 @@
+*.pyc
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Environnement virtuel
+venv/
+env/
+ENV/
+
+# Base de données
+*.sqlite3
+db.sqlite3
+
+# Fichiers media
+media/
+
+# Fichiers statiques collectés
+staticfiles/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Environnement
+.env
+
+# Logs
+*.log
+
+# Coverage
+htmlcov/
+.coverage
+.coverage.*

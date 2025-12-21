@@ -1,0 +1,127 @@
+@startuml use-case-diagram
+
+' Configuration
+skinparam actorStyle awesome
+left to right direction
+
+' Acteurs
+actor "Visiteur\n(Non connecté)" as Visiteur
+actor "Bénévole" as Benevole
+actor "Organisation" as Organisation
+actor "Administrateur" as Admin
+
+' Héritage des rôles
+Visiteur <|-- Benevole
+Visiteur <|-- Organisation
+
+rectangle "DZ-Volunteer - Plateforme de Volontariat" {
+  
+  ' ========== CAS D'UTILISATION PUBLICS ==========
+  package "Fonctionnalités Publiques" {
+    usecase "Consulter missions" as UC1
+    usecase "Rechercher missions\n(par wilaya, cause, ODD)" as UC2
+    usecase "S'inscrire\n(Bénévole/Organisation)" as UC3
+    usecase "Se connecter" as UC4
+    usecase "Consulter détails mission" as UC5
+    usecase "Consulter statistiques\nplateforme" as UC6
+  }
+  
+  ' ========== CAS D'UTILISATION BÉNÉVOLE ==========
+  package "Espace Bénévole" {
+    usecase "Gérer profil\n(infos, compétences)" as UC10
+    usecase "Ajouter compétences" as UC11
+    usecase "Postuler à mission" as UC12
+    usecase "Consulter candidatures" as UC13
+    usecase "Consulter historique\nmissions" as UC14
+    usecase "Consulter badge\n(Bronze/Silver/Gold)" as UC15
+    usecase "Noter organisation" as UC16
+    usecase "Signaler problème" as UC17
+  }
+  
+  ' ========== CAS D'UTILISATION ORGANISATION ==========
+  package "Espace Organisation" {
+    usecase "Créer mission" as UC20
+    usecase "Gérer missions\n(modifier, supprimer)" as UC21
+    usecase "Consulter candidatures" as UC22
+    usecase "Accepter/Refuser\ncandidature" as UC23
+    usecase "Valider heures\nde participation" as UC24
+    usecase "Noter bénévole" as UC25
+    usecase "Consulter statistiques\norganisation" as UC26
+  }
+  
+  ' ========== CAS D'UTILISATION ADMIN ==========
+  package "Espace Administrateur" {
+    usecase "Valider compétences\navec documents" as UC30
+    usecase "Vérifier organisations" as UC31
+    usecase "Modérer signalements" as UC32
+    usecase "Consulter statistiques\nglobales" as UC33
+    usecase "Gérer ODD" as UC34
+    usecase "Gérer compétences" as UC35
+  }
+}
+
+' ========== RELATIONS VISITEUR ==========
+Visiteur --> UC1
+Visiteur --> UC2
+Visiteur --> UC3
+Visiteur --> UC4
+Visiteur --> UC5
+Visiteur --> UC6
+
+' ========== RELATIONS BÉNÉVOLE ==========
+Benevole --> UC10
+Benevole --> UC11
+Benevole --> UC12
+Benevole --> UC13
+Benevole --> UC14
+Benevole --> UC15
+Benevole --> UC16
+Benevole --> UC17
+
+' ========== RELATIONS ORGANISATION ==========
+Organisation --> UC20
+Organisation --> UC21
+Organisation --> UC22
+Organisation --> UC23
+Organisation --> UC24
+Organisation --> UC25
+Organisation --> UC26
+
+' ========== RELATIONS ADMIN ==========
+Admin --> UC30
+Admin --> UC31
+Admin --> UC32
+Admin --> UC33
+Admin --> UC34
+Admin --> UC35
+
+' ========== RELATIONS INCLUDE/EXTEND ==========
+UC12 ..> UC11 : <<include>>\nVérifier compétences
+UC23 ..> UC12 : <<extend>>\nCréer participation
+UC24 ..> UC15 : <<include>>\nMettre à jour badge
+
+' Notes
+note right of UC12
+  **Règle métier:**
+  Vérification automatique des
+  compétences requises validées
+end note
+
+note right of UC24
+  **Règle métier:**
+  Validation heures → 
+  Mise à jour automatique
+  total_hours et badge_level
+end note
+
+note right of UC30
+  **Règle métier:**
+  Compétences nécessitant
+  vérification:
+  - Premiers Secours
+  - Langue des signes
+  - Psychologie
+  - etc.
+end note
+
+@enduml

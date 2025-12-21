@@ -1,0 +1,308 @@
+{
+  "info": {
+    "name": "DZ-Volunteer API",
+    "description": "Collection Postman pour tester l'API DZ-Volunteer",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://127.0.0.1:8000/api",
+      "type": "string"
+    },
+    {
+      "key": "token",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Authentification",
+      "item": [
+        {
+          "name": "Inscription Bénévole",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"test@email.com\",\n  \"password\": \"password123\",\n  \"password_confirm\": \"password123\",\n  \"first_name\": \"Test\",\n  \"last_name\": \"User\",\n  \"phone\": \"0555123456\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/register/volunteer/",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "register", "volunteer", ""]
+            }
+          }
+        },
+        {
+          "name": "Inscription Organisation",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"org@test.dz\",\n  \"password\": \"password123\",\n  \"password_confirm\": \"password123\",\n  \"name\": \"Test Organisation\",\n  \"organization_type\": \"ASSOCIATION\",\n  \"email_org\": \"info@test.dz\",\n  \"phone\": \"0555987654\",\n  \"wilaya\": \"16\",\n  \"address\": \"Adresse test\",\n  \"representative_name\": \"Représentant Test\",\n  \"representative_position\": \"Président\",\n  \"representative_email\": \"rep@test.dz\",\n  \"description\": \"Description de l'organisation avec au moins 500 caractères pour respecter la validation. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum. Cette description contient maintenant plus de 500 caractères.\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/register/organization/",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "register", "organization", ""]
+            }
+          }
+        },
+        {
+          "name": "Connexion",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"amira.benali@email.dz\",\n  \"password\": \"password123\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/login/",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "login", ""]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Pages Publiques",
+      "item": [
+        {
+          "name": "Statistiques Accueil",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/missions/home-stats/",
+              "host": ["{{baseUrl}}"],
+              "path": ["missions", "home-stats", ""]
+            }
+          }
+        },
+        {
+          "name": "Liste des Missions",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/missions/",
+              "host": ["{{baseUrl}}"],
+              "path": ["missions", ""]
+            }
+          }
+        },
+        {
+          "name": "Détail Mission",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/missions/1/",
+              "host": ["{{baseUrl}}"],
+              "path": ["missions", "1", ""]
+            }
+          }
+        },
+        {
+          "name": "Liste des ODD",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/odd/",
+              "host": ["{{baseUrl}}"],
+              "path": ["odd", ""]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Espace Bénévole",
+      "item": [
+        {
+          "name": "Dashboard",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/missions/volunteer/dashboard/",
+              "host": ["{{baseUrl}}"],
+              "path": ["missions", "volunteer", "dashboard", ""]
+            }
+          }
+        },
+        {
+          "name": "Postuler à une Mission",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"message\": \"Je suis très motivé pour cette mission !\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/missions/volunteer/apply/1/",
+              "host": ["{{baseUrl}}"],
+              "path": ["missions", "volunteer", "apply", "1", ""]
+            }
+          }
+        },
+        {
+          "name": "Mes Candidatures",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/missions/volunteer/applications/",
+              "host": ["{{baseUrl}}"],
+              "path": ["missions", "volunteer", "applications", ""]
+            }
+          }
+        },
+        {
+          "name": "Mes Compétences",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/skills/my-skills/",
+              "host": ["{{baseUrl}}"],
+              "path": ["skills", "my-skills", ""]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Espace Organisation",
+      "item": [
+        {
+          "name": "Dashboard Organisation",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/missions/organization/dashboard/",
+              "host": ["{{baseUrl}}"],
+              "path": ["missions", "organization", "dashboard", ""]
+            }
+          }
+        },
+        {
+          "name": "Créer une Mission",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Nouvelle mission test\",\n  \"short_description\": \"Description courte\",\n  \"full_description\": \"Description complète de la mission\",\n  \"mission_type\": \"ONE_TIME\",\n  \"odd\": 1,\n  \"causes\": [\"SOCIAL\"],\n  \"date\": \"2025-04-01\",\n  \"start_time\": \"09:00:00\",\n  \"end_time\": \"13:00:00\",\n  \"wilaya\": \"16\",\n  \"commune\": \"Alger\",\n  \"full_address\": \"Adresse complète\",\n  \"meeting_point\": \"Point de rencontre\",\n  \"required_volunteers\": 10,\n  \"experience_level\": \"BEGINNER\",\n  \"status\": \"PUBLISHED\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/missions/organization/missions/",
+              "host": ["{{baseUrl}}"],
+              "path": ["missions", "organization", "missions", ""]
+            }
+          }
+        },
+        {
+          "name": "Candidatures d'une Mission",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/missions/organization/mission/1/applications/",
+              "host": ["{{baseUrl}}"],
+              "path": ["missions", "organization", "mission", "1", "applications", ""]
+            }
+          }
+        },
+        {
+          "name": "Accepter Candidature",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"action\": \"accept\",\n  \"message\": \"Bienvenue ! Rendez-vous à 9h.\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/missions/organization/application/1/respond/",
+              "host": ["{{baseUrl}}"],
+              "path": ["missions", "organization", "application", "1", "respond", ""]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,33 @@
+# Dépendances de développement et tests
+# À installer avec: pip install -r requirements-dev.txt
+
+# Formatage et Linting
+black==24.1.1
+flake8==7.0.0
+ruff==0.1.15
+isort==5.13.2
+
+# Tests
+pytest==7.4.4
+pytest-django==4.7.0
+pytest-cov==4.1.0
+pytest-xdist==3.5.0  # Tests parallèles
+pytest-mock==3.12.0
+factory-boy==3.3.0  # Factories pour tests
+faker==22.0.0  # Données de test
+
+# Documentation API
+drf-spectacular==0.27.0
+
+# Sécurité
+safety==3.0.1
+bandit==1.7.6
+
+# Debugging
+ipdb==0.13.13
+django-debug-toolbar==4.2.0
+
+# Code Quality
+pylint==3.0.3
+mypy==1.8.0
+django-stubs==4.2.7
