@@ -9,16 +9,12 @@ exclude =
     build,
     dist
 
-# Ignorer certaines erreurs
 ignore = 
-    E203,  # whitespace before ':'
-    E501,  # line too long (géré par black)
-    W503,  # line break before binary operator
+    E203,
+    E501,
+    W503
 
-# Complexité maximale
 max-complexity = 10
-
-# Format de sortie
 format = pylint
 show-source = True
 statistics = True

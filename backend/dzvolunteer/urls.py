@@ -2,20 +2,19 @@
 URLs principales du projet
 """
 
-from django.contrib import admin
-from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
+from django.contrib import admin
+from django.urls import include, path
 
 urlpatterns = [
     # Admin Django
-    path('admin/', admin.site.urls),
-    
+    path("admin/", admin.site.urls),
     # API
-    path('api/auth/', include('accounts.urls')),
-    path('api/missions/', include('missions.urls')),
-    path('api/skills/', include('skills.urls')),
-    path('api/odd/', include('odd.urls')),
+    path("api/auth/", include("accounts.urls")),
+    path("api/missions/", include("missions.urls")),
+    path("api/skills/", include("skills.urls")),
+    path("api/odd/", include("odd.urls")),
 ]
 
 # Servir les fichiers media en développement

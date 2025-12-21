@@ -2,6 +2,6 @@ from django.apps import AppConfig
 
 
 class SkillsConfig(AppConfig):
-    default_auto_field = 'django.db.models.BigAutoField'
-    name = 'skills'
-    verbose_name = 'Gestion des compétences'
+    default_auto_field = "django.db.models.BigAutoField"
+    name = "skills"
+    verbose_name = "Gestion des compétences"
