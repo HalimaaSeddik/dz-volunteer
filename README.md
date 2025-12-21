@@ -1,51 +1,59 @@
 # DZ-Volunteer 🇩🇿
 
-Plateforme algérienne de bénévolat connectant des bénévoles avec des organisations pour des missions alignées aux 17 Objectifs de Développement Durable de l'ONU.
+Plateforme web pour connecter les bénévoles algériens avec des organisations qui ont besoin d'aide.
 
-## 🌟 À Propos
+## C'est quoi ce projet ?
 
-DZ-Volunteer est une plateforme web complète permettant de :
-- Mettre en relation des **bénévoles** avec des **organisations** 
-- Publier et rechercher des **missions de bénévolat**
-- Gérer les **candidatures** et **participations**
-- Valider les **compétences** (avec système de vérification)
-- Suivre les **heures de bénévolat** et attribuer des **badges**
-- Contribuer aux **17 ODD de l'ONU**
+J'ai créé cette application web pour faciliter le bénévolat en Algérie. L'idée c'est simple :
+- Les organisations peuvent publier des missions de bénévolat
+- Les bénévoles peuvent postuler aux missions qui les intéressent
+- On suit les heures de bénévolat et on donne des badges (Bronze, Argent, Or)
+- Tout est lié aux 17 objectifs de développement durable de l'ONU
 
-## 🏗️ Architecture
-
-```
-dz-volunteer/
-├── backend/          # API Django REST Framework + PostgreSQL
-├── frontend/         # Interface utilisateur (à développer)
-├── docs/            # Documentation
-└── docker-compose.yml
-```
-
-## 🚀 Démarrage Rapide
+## Ce que j'ai fait
 
 ### Backend (Django)
+- API REST avec Django pour gérer tout le système
+- Base de données PostgreSQL
+- Système d'authentification avec JWT
+- 3 types d'utilisateurs : Bénévoles, Organisations, Admins
+- Badge automatique selon les heures (Bronze: 0-49h, Argent: 50-199h, Or: 200h+)
+- 58 wilayas d'Algérie intégrées
+- Support bilingue (Français/Arabe)
 
-```powershell
+### Frontend (React)
+Pour l'instant c'est juste le template de base, le développement viendra plus tard.
+
+## Comment lancer le projet
+
+### 1. Backend
+
+```bash
 cd backend
 
-# Installation automatique
-.\setup.ps1
-
-# OU installation manuelle
+# Installer les dépendances
 python -m venv venv
-.\venv\Scripts\activate
+venv\Scripts\activate
 pip install -r requirements.txt
+
+# Créer la base de données PostgreSQL
+# (ouvrir psql et faire: CREATE DATABASE dzvolunteer;)
+
+# Appliquer les migrations
 python manage.py migrate
+
+# Charger les données de base
 python manage.py init_data
+
+# Lancer le serveur
 python manage.py runserver
 ```
 
-📖 **Documentation complète** : [backend/README.md](backend/README.md)
+Le serveur tourne sur http://localhost:8000
 
-### Frontend (En cours de développement)
+### 2. Frontend
 
-```powershell
+```bash
 cd frontend/dz-volunter
 npm install
 npm run dev

@@ -1,7 +1,3 @@
-"""
-Modèles pour la gestion des utilisateurs, bénévoles et organisations
-"""
-
 from django.db import models
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
 from django.core.validators import MinLengthValidator, RegexValidator
@@ -9,11 +5,10 @@ from django.utils import timezone
 
 
 class UserManager(BaseUserManager):
-    """Manager personnalisé pour le modèle User"""
     
     def create_user(self, email, password=None, **extra_fields):
         if not email:
-            raise ValueError('L\'adresse email est obligatoire')
+            raise ValueError('Il faut un email')
         email = self.normalize_email(email)
         user = self.model(email=email, **extra_fields)
         user.set_password(password)
@@ -34,10 +29,6 @@ class UserManager(BaseUserManager):
 
 
 class User(AbstractBaseUser, PermissionsMixin):
-    """
-    Modèle utilisateur personnalisé
-    Types: VOLUNTEER (Bénévole), ORGANIZATION (Organisation), ADMIN (Administrateur)
-    """
     
     USER_TYPE_CHOICES = [
         ('VOLUNTEER', 'Bénévole'),
@@ -45,19 +36,19 @@ class User(AbstractBaseUser, PermissionsMixin):
         ('ADMIN', 'Administrateur'),
     ]
     
-    email = models.EmailField(unique=True, verbose_name='Email')
-    first_name = models.CharField(max_length=100, verbose_name='Prénom', blank=True)
-    last_name = models.CharField(max_length=100, verbose_name='Nom', blank=True)
+    email = models.EmailField(unique=True)
+    first_name = models.CharField(max_length=100, blank=True)
+    last_name = models.CharField(max_length=100, blank=True)
     phone = models.CharField(
         max_length=15, 
         validators=[RegexValidator(regex=r'^0[5-7]\d{8}$', message='Numéro invalide')],
         verbose_name='Téléphone',
         blank=True
     )
-    user_type = models.CharField(max_length=20, choices=USER_TYPE_CHOICES, verbose_name='Type d\'utilisateur')
-    is_active = models.BooleanField(default=True, verbose_name='Actif')
-    is_staff = models.BooleanField(default=False, verbose_name='Staff')
-    date_joined = models.DateTimeField(default=timezone.now, verbose_name='Date d\'inscription')
+    user_type = models.CharField(max_length=20, choices=USER_TYPE_CHOICES)
+    is_active = models.BooleanField(default=True)
+    is_staff = models.BooleanField(default=False)
+    date_joined = models.DateTimeField(default=timezone.now)
     
     objects = UserManager()
     
@@ -65,8 +56,6 @@ class User(AbstractBaseUser, PermissionsMixin):
     REQUIRED_FIELDS = []
     
     class Meta:
-        verbose_name = 'Utilisateur'
-        verbose_name_plural = 'Utilisateurs'
         ordering = ['-date_joined']
     
     def __str__(self):
@@ -77,9 +66,6 @@ class User(AbstractBaseUser, PermissionsMixin):
 
 
 class Volunteer(models.Model):
-    """
-    Profil Bénévole
-    """
     
     BADGE_CHOICES = [
         ('BRONZE', 'Bronze (0-49h)'),
@@ -94,15 +80,14 @@ class Volunteer(models.Model):
     ]
     
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='volunteer_profile')
-    date_of_birth = models.DateField(verbose_name='Date de naissance', null=True, blank=True)
-    gender = models.CharField(max_length=1, choices=GENDER_CHOICES, verbose_name='Sexe', blank=True)
-    wilaya = models.CharField(max_length=2, verbose_name='Wilaya', blank=True)
-    commune = models.CharField(max_length=100, verbose_name='Commune', blank=True)
-    profile_picture = models.ImageField(upload_to='volunteers/', verbose_name='Photo de profil', blank=True, null=True)
-    motivation = models.TextField(verbose_name='Ma motivation', blank=True)
+    date_of_birth = models.DateField(null=True, blank=True)
+    gender = models.CharField(max_length=1, choices=GENDER_CHOICES, blank=True)
+    wilaya = models.CharField(max_length=2, blank=True)
+    commune = models.CharField(max_length=100, blank=True)
+    profile_picture = models.ImageField(upload_to='volunteers/', blank=True, null=True)
+    motivation = models.TextField(blank=True)
     
-    # Statistiques
-    total_hours = models.DecimalField(max_digits=10, decimal_places=2, default=0, verbose_name='Total heures')
+    total_hours = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     completed_missions = models.IntegerField(default=0, verbose_name='Missions complétées')
     average_rating = models.DecimalField(max_digits=3, decimal_places=2, default=0, verbose_name='Note moyenne')
     badge_level = models.CharField(max_length=10, choices=BADGE_CHOICES, default='BRONZE', verbose_name='Badge')

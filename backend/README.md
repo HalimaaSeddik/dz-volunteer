@@ -1,83 +1,153 @@
-# DZ-Volunteer Backend
+# Backend DZ-Volunteer
 
-Backend Django pour la plateforme de bénévolat DZ-Volunteer.
+C'est le backend de l'application DZ-Volunteer, fait avec Django.
 
-## 🚀 Installation et Configuration
+## Ce qu'il faut avoir
 
-### Prérequis
+- Python 3.10 ou plus récent
+- PostgreSQL installé sur votre PC
+- Le mot de passe PostgreSQL : 20772077
 
-- Python 3.10+
-- PostgreSQL 12+
-- pip
+## Installation
 
-### Installation
+### Étape 1: Environnement virtuel
 
-1. **Créer un environnement virtuel**
-
-```powershell
+```bash
 python -m venv venv
-.\venv\Scripts\activate
+venv\Scripts\activate
 ```
 
-2. **Installer les dépendances**
+### Étape 2: Installer les packages
 
-```powershell
+```bash
 pip install -r requirements.txt
 ```
 
-3. **Configurer la base de données PostgreSQL**
+### Étape 3: Base de données
 
-Créer la base de données dans PostgreSQL :
+Ouvrir psql (le terminal PostgreSQL) et créer la base de données :
 
-```powershell
-# Ouvrir psql
-psql -U postgres
-
-# Dans psql, créer la base de données
+```sql
 CREATE DATABASE dzvolunteer;
-
-# Quitter psql
-\q
 ```
 
-4. **Configuration des variables d'environnement**
+Le fichier .env est déjà configuré avec le bon mot de passe (20772077).
 
-Le fichier `.env` est déjà configuré avec :
-- `DB_PASSWORD=20772077`
-- `DB_USER=postgres`
-- `DB_NAME=dzvolunteer`
+### Étape 4: Créer les tables
 
-5. **Appliquer les migrations**
-
-```powershell
-python manage.py makemigrations
+```bash
 python manage.py migrate
 ```
 
-6. **Initialiser les données de base (ODD et compétences)**
+### Étape 5: Charger les données de base
 
-```powershell
+Ça va créer les 17 ODD de l'ONU et les compétences de base :
+
+```bash
 python manage.py init_data
 ```
 
-7. **Créer un super utilisateur**
+### Étape 6: Créer un compte admin
 
-```powershell
+```bash
 python manage.py createsuperuser
 ```
 
-8. **Lancer le serveur**
+### Étape 7: Lancer le serveur
 
-```powershell
+```bash
 python manage.py runserver
 ```
 
-Le serveur sera accessible sur : http://127.0.0.1:8000/
+Voilà ! Le site tourne sur http://127.0.0.1:8000/
 
-## 📚 Structure du Projet
+## Structure du projet
 
 ```
 backend/
+├── accounts/         # Gestion des utilisateurs (bénévoles, organisations)
+├── missions/         # Gestion des missions et candidatures
+├── skills/          # Compétences des bénévoles
+├── odd/             # Les 17 objectifs ONU
+├── tests/           # Tests du code
+└── manage.py        # Commandes Django
+```
+
+## Les fonctionnalités
+
+### Pour les bénévoles
+- S'inscrire et créer un profil
+- Chercher des missions par wilaya ou cause
+- Postuler aux missions
+- Ajouter ses compétences
+- Voir son badge (Bronze/Argent/Or)
+- Consulter son historique
+
+### Pour les organisations
+- Créer des missions
+- Gérer les candidatures
+- Valider les heures de bénévolat
+- Noter les bénévoles
+
+### Pour les admins
+- Valider les compétences qui nécessitent des documents
+- Vérifier les organisations
+- Voir les statistiques
+
+## API Endpoints
+
+Les principaux endpoints de l'API :
+
+- `POST /api/auth/register/` - Inscription
+- `POST /api/auth/login/` - Connexion
+- `GET /api/missions/` - Liste des missions
+- `POST /api/missions/volunteer/apply/` - Postuler à une mission
+- `POST /api/missions/organization/validate-hours/` - Valider les heures
+
+Documentation complète : http://localhost:8000/api/docs/
+
+## Base de données
+
+J'utilise PostgreSQL avec ces tables principales :
+- users - Les comptes utilisateurs
+- volunteers - Profils des bénévoles
+- organizations - Profils des organisations
+- missions - Les missions de bénévolat
+- applications - Les candidatures
+- skills - Les compétences
+- odd - Les 17 objectifs ONU
+
+## Technologies utilisées
+
+- Django 5.0.1
+- Django REST Framework
+- PostgreSQL
+- JWT pour l'authentification
+- Docker (optionnel)
+
+## Problèmes courants
+
+**Erreur de connexion à PostgreSQL** : Vérifier que PostgreSQL tourne et que le mot de passe dans .env est correct (20772077)
+
+**Erreur lors des migrations** : Supprimer la base et la recréer : `DROP DATABASE dzvolunteer; CREATE DATABASE dzvolunteer;`
+
+**Port 8000 déjà utilisé** : Utiliser un autre port : `python manage.py runserver 8001`
+
+## Tests
+
+Pour lancer les tests :
+
+```bash
+pytest
+```
+
+## Docker (optionnel)
+
+Si vous préférez utiliser Docker :
+
+```bash
+docker-compose up
+```
 ├── dzvolunteer/          # Configuration principale
 │   ├── settings.py       # Paramètres Django
 │   ├── urls.py           # URLs principales
